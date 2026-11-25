@@ -4,7 +4,6 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SupportAssistant from '@/components/SupportAssistant';
-import WhatsAppButton from '@/components/WhatsAppButton';
 import Analytics from '@/components/Analytics';
 import { CONTACT } from '@/lib/data';
 
@@ -94,7 +93,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main id="main-content">{children}</main>
         <Footer />
         <SupportAssistant />
-        <WhatsAppButton />
         <Analytics />
         <script
           type="application/ld+json"

@@ -3496,68 +3496,12 @@ h1, h2, h3, h4 {
 
 
 /* ============================================================
-   GROWTH ADDITIONS — WhatsApp FAB, newsletter, FAQ, map, gallery,
-   testimonials + chat-widget stacking
+   GROWTH ADDITIONS — newsletter, FAQ, map, gallery, testimonials
    ============================================================ */
 
-/* --- Floating WhatsApp button (stacked above the chat bubble) --- */
-.egwa-fab {
-  position: fixed;
-  right: 24px;
-  bottom: 92px;
-  z-index: 900;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #25D366, #1DA851);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 26px rgba(29, 168, 81, 0.4);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.egwa-fab:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 16px 32px rgba(29, 168, 81, 0.5);
-}
-
-.egwa-fab:focus-visible {
-  outline: 2px solid #1DA851;
-  outline-offset: 3px;
-}
-
-.egwa-fab-tooltip {
-  position: absolute;
-  right: 62px;
-  top: 50%;
-  transform: translateY(-50%) translateX(6px);
-  background: #071B3A;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  padding: 8px 14px;
-  border-radius: 10px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.egwa-fab:hover .egwa-fab-tooltip {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
-}
-
-/* Room for the WhatsApp + chat bubbles above the hero wave controls */
+/* Room for the chat bubble above the hero wave controls */
 .eghero-values {
   padding-right: 84px;
-}
-
-/* Chat panel moves above both bubbles */
-.egchat-panel {
-  bottom: 156px;
 }
 
 /* --- Contact page: WhatsApp CTA + FAQ + map --- */
@@ -3807,16 +3751,6 @@ h1, h2, h3, h4 {
   color: var(--ink-light, #45526b);
 }
 
-@media (max-width: 480px) {
-  .egwa-fab {
-    right: 16px;
-    bottom: 82px;
-  }
-  .egchat-panel {
-    bottom: 146px;
-  }
-}
-
 /* Eyebrows sitting on dark bands keep the bright champagne tone */
 .dark-band .eyebrow,
 .contact-band .eyebrow,
@@ -3825,17 +3759,11 @@ h1, h2, h3, h4 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .egwa-fab,
-  .egwa-fab-tooltip,
-  .egwa-fab .egwa-fab-tooltip,
   .gallery-item img,
   .faq-item summary svg,
   .footer-newsletter-row button {
     transition: none !important;
     transform: none !important;
-  }
-  .egwa-fab .egwa-fab-tooltip {
-    opacity: 1;
   }
 }
 
