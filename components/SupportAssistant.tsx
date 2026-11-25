@@ -6,15 +6,16 @@ import { MessageCircle, X, Send, Compass } from 'lucide-react';
 import { businesses, CONTACT, WHATSAPP, foundationThematicAreas } from '@/lib/data';
 
 /**
- * Support assistant upgrade hook:
- * Set AI_ENDPOINT to an OpenAI-compatible chat endpoint (POST { messages } →
- * { reply, actions? }) and the widget will call it first, falling back to the
- * on-board knowledge base on any failure. Empty (default) = local answers only.
+ * AI support is served by our own server route (/api/chat), which holds the
+ * OpenRouter API key and grounds answers in the site's data. If the key is not
+ * configured or the service is unavailable, the widget falls back to the
+ * on-board knowledge base automatically.
  */
-const AI_ENDPOINT = '';
+const AI_CHAT_ENDPOINT = '/api/chat';
 
 type ActionLink = { label: string; href: string };
 type Msg = { from: 'bot' | 'user'; text: string; actions?: ActionLink[] };
+type ChatMsg = { role: 'user' | 'assistant'; text: string };
 
 const GREETING: Msg = {
   from: 'bot',
@@ -125,7 +126,7 @@ const INTENTS: Intent[] = [
   {
     keys: ['hours', 'open', 'closing', 'time do', 'when are you'],
     answer: () => ({
-      text: "We don't publish fixed opening hours on the site, but we're responsive during regular business hours (WAT) by phone and email.",
+      text: 'Monday to Friday, 8:00 AM – 5:00 PM (WAT). Weekend enquiries are answered by email.',
       actions: [{ label: 'Contact page', href: '/contact' }],
     }),
   },
@@ -258,8 +259,10 @@ export default function SupportAssistant() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState('');
+  const [aiActive, setAiActive] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<ChatMsg[]>([]);
 
   // Keep the conversation pinned to the newest message.
   useEffect(() => {
@@ -284,35 +287,44 @@ export default function SupportAssistant() {
 
   async function send(raw: string) {
     const clean = raw.trim();
-    if (!clean) return;
+    if (!clean || typing) return;
     setMessages((m) => [...m, { from: 'user', text: clean }]);
     setInput('');
     setTyping(true);
 
     let reply: Omit<Msg, 'from'>;
-    if (AI_ENDPOINT) {
-      try {
-        const res = await fetch(AI_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages }),
-        });
-        if (!res.ok) throw new Error(`status ${res.status}`);
-        const data = await res.json();
-        if (!data.reply) throw new Error('empty reply');
-        reply = { text: String(data.reply), actions: Array.isArray(data.actions) ? data.actions : undefined };
-      } catch {
-        reply = localAnswer(clean);
-      }
-    } else {
+    try {
+      const res = await fetch(AI_CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: clean, history: historyRef.current }),
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const data = await res.json();
+      if (data.available === false) throw new Error('local mode');
+      if (typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('empty reply');
+      setAiActive(true);
+      reply = {
+        text: data.reply.trim(),
+        actions: Array.isArray(data.actions) ? data.actions : undefined,
+      };
+    } catch {
+      // No API key, rate limit or network issue — keep the conversation useful.
       reply = localAnswer(clean);
     }
+
+    // OpenRouter is stateless, so keep a short history for follow-up questions.
+    const newTurns: ChatMsg[] = [
+      { role: 'user', text: clean },
+      { role: 'assistant', text: reply.text },
+    ];
+    historyRef.current = [...historyRef.current, ...newTurns].slice(-8);
 
     // A short beat so the typing indicator reads naturally.
     setTimeout(() => {
       setMessages((m) => [...m, { from: 'bot', ...reply }]);
       setTyping(false);
-    }, 750);
+    }, 400);
   }
 
   return (
@@ -324,10 +336,13 @@ export default function SupportAssistant() {
               <Compass size={19} />
             </span>
             <div>
-              <div className="egchat-head-title">Elders Assistant</div>
+              <div className="egchat-head-title">
+                Elders Assistant
+                {aiActive && <span className="egchat-ai-tag">AI</span>}
+              </div>
               <div className="egchat-head-sub">
                 <span className="egchat-status" aria-hidden="true" />
-                Typically replies instantly
+                {aiActive ? 'AI powered · replies instantly' : 'Typically replies instantly'}
               </div>
             </div>
             <button className="egchat-close" onClick={() => setOpen(false)} aria-label="Close chat">
